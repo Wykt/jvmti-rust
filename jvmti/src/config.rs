@@ -1,7 +1,7 @@
 extern crate toml;
 
 use std::fs::File;
-use std::io::{ Read };
+use std::io::Read;
 use std::path::Path;
 
 #[derive(Deserialize)]

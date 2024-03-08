@@ -131,7 +131,7 @@ impl JVMTI for JVMTIEnvironment {
 
     fn get_thread_info(&self, thread_id: &JavaThread) -> Result<Thread, NativeError> {
         let mut info = Struct__jvmtiThreadInfo { name: ptr::null_mut(), priority: 0, is_daemon: 0, thread_group: ptr::null_mut(), context_class_loader: ptr::null_mut()};
-        let mut info_ptr = &mut info;
+        let info_ptr = &mut info;
 
         unsafe {
             match (**self.jvmti).GetThreadInfo {
@@ -166,13 +166,13 @@ impl JVMTI for JVMTIEnvironment {
 
     fn get_method_name(&self, method_id: &MethodId) -> Result<MethodSignature, NativeError> {
         let mut method_name = ptr::null_mut();
-        let mut method_ptr = &mut method_name;
+        let method_ptr = &mut method_name;
 
         let mut signature: MutString = ptr::null_mut();
-        let mut signature_ptr = &mut signature;
+        let signature_ptr = &mut signature;
 
         let mut generic_sig: MutString = ptr::null_mut();
-        let mut generic_sig_ptr = &mut generic_sig;
+        let generic_sig_ptr = &mut generic_sig;
 
         unsafe {
             match wrap_error((**self.jvmti).GetMethodName.unwrap()(self.jvmti, method_id.native_id, method_ptr, signature_ptr, generic_sig_ptr)) {

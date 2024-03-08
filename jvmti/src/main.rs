@@ -7,15 +7,6 @@ use std::fs::File;
 use jvmti::bytecode::*;
 use jvmti::bytecode::printer::*;
 
-fn main2() {
-    let class = Classfile::new();
-
-    if let Ok(mut outfile) = File::create("RustEmpty.class") {
-        let mut writer = ClassWriter::new(&mut outfile);
-        let _ = writer.write_class(&class);
-    }
-}
-
 // The main program is a simple interface to access the bytecode parsing and generating
 // functionality and as such, it's not intended for actual use.
 fn main() {

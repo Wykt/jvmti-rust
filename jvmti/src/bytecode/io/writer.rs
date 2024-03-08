@@ -2,7 +2,7 @@ use std::io::{ Write, Error, ErrorKind };
 use super::super::classfile::*;
 
 pub struct ClassWriter<'a> {
-    target: &'a mut Write
+    target: &'a mut dyn Write
 }
 
 impl<'a> ClassWriter<'a> {

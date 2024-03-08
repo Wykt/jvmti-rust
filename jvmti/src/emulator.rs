@@ -2,7 +2,7 @@ use super::capabilities::Capabilities;
 use super::class::{ClassId, ClassSignature};
 use super::error::NativeError;
 use super::environment::jvm::JVMF;
-use super::environment::jvmti::{JVMTI};
+use super::environment::jvmti::JVMTI;
 use super::event::{EventCallbacks, VMEvent};
 use super::mem::MemoryAllocation;
 use super::method::{MethodId, MethodSignature};
@@ -39,7 +39,7 @@ impl JVMEmulator {
 }
 
 impl JVMF for JVMEmulator {
-    fn get_environment(&self) -> Result<Box<JVMTI>, NativeError> {
+    fn get_environment(&self) -> Result<Box<dyn JVMTI>, NativeError> {
         Ok(Box::new(JVMEmulator::new()))
     }
 

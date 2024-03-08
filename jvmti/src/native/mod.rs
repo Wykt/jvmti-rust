@@ -34,6 +34,7 @@ pub type JavaVersionNumber = jvmti_native::jint;
 
 #[allow(dead_code)]
 #[allow(bad_style)]
+#[allow(non_camel_case_types)]
 pub mod jvmti_native {
 
     use libc::{c_char, c_uchar, c_short, c_ushort, c_int, c_uint, c_longlong, c_ulonglong, c_long, c_ulong, c_float, c_double, c_void};

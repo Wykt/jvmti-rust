@@ -34,11 +34,11 @@ impl JavaClass {
     }
 
     // TODO: this function should report errors better, instead of just returning nothing on error
-    pub fn from_classfile(classfile: &Classfile) -> Option<JavaClass> {
+    pub fn from_classfile(_classfile: &Classfile) -> Option<JavaClass> {
         None
     }
 
-    pub fn add_method(method: Method) {
+    pub fn add_method(_method: Method) {
 
     }
 }

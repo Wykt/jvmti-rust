@@ -12,7 +12,7 @@ use std::mem::size_of;
 use std::ptr;
 use super::util::stringify;
 use super::bytecode::*;
-use std::io::{ Cursor };
+use std::io::Cursor;
 
 pub static mut CALLBACK_TABLE: EventCallbacks = EventCallbacks {
     vm_init: None,

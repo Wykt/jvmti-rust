@@ -6,12 +6,6 @@ use time::Duration;
 use time::Tm;
 use time::now;
 
-///
-/// Public static mutable *cough* agent context. This seems necessary as our code is invoked from
-/// the JVM and we need a place to store the temporary mutable data.
-///
-/// This wouldn't be such a problem if this was a C program, but you know, this is not a C program.
-///
 lazy_static! {
     static ref STATIC_CONTEXT: AgentContext = AgentContext::new();
 }
