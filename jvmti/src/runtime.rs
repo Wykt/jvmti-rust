@@ -1,4 +1,3 @@
-use super::bytecode::Classfile;
 use super::class::{ClassId, ClassSignature};
 use super::method::{MethodId, MethodSignature};
 use super::thread::Thread;
