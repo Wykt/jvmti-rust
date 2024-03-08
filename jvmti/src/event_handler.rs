@@ -441,53 +441,35 @@ unsafe extern "C" fn local_cb_class_file_load_hook(jvmti_env: JVMTIEnvPtr, jni_e
             ptr::copy_nonoverlapping(class_data, data_ptr, class_data_len as usize);
             raw_data.set_len(class_data_len as usize);
 
-            if let Ok(classfile) = parse_class(&raw_data) {
-                match function(ClassFileLoadEvent { class_name: stringify(name), class: classfile }) {
-                    Some(transformed) => {
-                        println!("Transformed class {}", stringify(name));
+            match function(ClassFileLoadEvent { class_name: stringify(name), class_data: raw_data}) {
+                Some(transformed) => {
+                    println!("Transformed class {}", stringify(name));
 
-                        match env.allocate(transformed.len()) {
-                            Ok(allocation) => {
-                                ptr::copy_nonoverlapping(transformed.as_ptr(), allocation.ptr, allocation.len);
-                                *new_class_data_len = allocation.len as i32;
-                                *new_class_data = allocation.ptr;
-                            },
-                            Err(err) => {
-                                println!("Failed to allocate memory")
-                            }
+                    match env.allocate(transformed.len()) {
+                        Ok(allocation) => {
+                            ptr::copy_nonoverlapping(transformed.as_ptr(), allocation.ptr, allocation.len);
+                            *new_class_data_len = allocation.len as i32;
+                            *new_class_data = allocation.ptr;
+                        },
+                        Err(err) => {
+                            println!("Failed to allocate memory")
                         }
-                    },
-                    None => ()
-                }
-
-            } else {
-                println!("Coult not parse class file");
+                    }
+                },
+                None => ()
             }
         },
         None => println!("No dynamic callback method was found for class file load events")
     }
 }
 
+// this might be useful later
+#[allow(dead_code)]
 fn parse_class(data: &Vec<u8>) -> Result<Classfile, ::std::io::Error> {
     let mut cursor = Cursor::new(data);
 
     //let class_result = ClassReader::read_class(&mut cursor);
     ClassReader::read_class(&mut cursor)
-
-/*
-    match class_result {
-        Ok(classfile) => {
-            let output_class: Vec<u8> = vec![];
-            let mut write_cursor = Cursor::new(output_class);
-            let mut writer = ClassWriter::new(&mut write_cursor);
-            match writer.write_class(&classfile) {
-                Ok(len) => (),
-                Err(error) => ()
-            }
-        },
-        Err(error) => ()
-    }
-    */
 }
 
 #[allow(unused_variables)]

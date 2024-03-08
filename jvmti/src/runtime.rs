@@ -28,7 +28,7 @@ impl RuntimeEvent for MethodInvocationEvent {}
 
 pub struct ClassFileLoadEvent {
     pub class_name: String,
-    pub class: Classfile
+    pub class_data: Vec<u8>
 }
 
 impl RuntimeEvent for ClassFileLoadEvent {}
