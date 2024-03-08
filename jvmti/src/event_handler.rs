@@ -463,9 +463,6 @@ unsafe extern "C" fn local_cb_class_file_load_hook(jvmti_env: JVMTIEnvPtr, jni_e
             } else {
                 println!("Coult not parse class file");
             }
-
-
-            println!("Loading class {} with length {}", stringify(name), class_data_len);
         },
         None => println!("No dynamic callback method was found for class file load events")
     }
