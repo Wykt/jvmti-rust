@@ -1,5 +1,6 @@
 
 /// A type-safe representation of possible errors
+#[derive(Debug)]
 pub enum NativeError {
     NoError = 0,
     MustPossessCapability = 99,

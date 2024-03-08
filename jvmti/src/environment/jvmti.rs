@@ -1,3 +1,4 @@
+
 use super::super::capabilities::Capabilities;
 use super::super::class::{ClassId, ClassSignature, JavaType};
 use super::super::error::{wrap_error, NativeError};
@@ -10,7 +11,8 @@ use super::super::util::stringify;
 use super::super::version::VersionNumber;
 use super::super::native::{MutString, MutByteArray, JavaClass, JavaObject, JavaInstance, JavaLong, JavaThread, JVMTIEnvPtr};
 use super::super::native::jvmti_native::{Struct__jvmtiThreadInfo, jvmtiCapabilities};
-use std::ptr;
+use std::ptr::{self};
+use libc::c_int;
 
 pub trait JVMTI {
 
@@ -31,6 +33,7 @@ pub trait JVMTI {
     /// function and set_event_notification_mode are called does not affect the result.
     fn set_event_callbacks(&mut self, callbacks: EventCallbacks) -> Option<NativeError>;
     fn set_event_notification_mode(&mut self, event: VMEvent, mode: bool) -> Option<NativeError>;
+    fn get_all_threads(&self) -> Result<Vec<JavaThread>, NativeError>;
     fn get_thread_info(&self, thread_id: &JavaThread) -> Result<Thread, NativeError>;
     fn get_method_declaring_class(&self, method_id: &MethodId) -> Result<ClassId, NativeError>;
     fn get_method_name(&self, method_id: &MethodId) -> Result<MethodSignature, NativeError>;
@@ -59,6 +62,29 @@ impl JVMTI for JVMTIEnvironment {
             (**self.jvmti).GetVersionNumber.unwrap()(self.jvmti, version_ptr);
             let uversion = *version_ptr as u32;
             VersionNumber::from_u32(&uversion)
+        }
+    }
+
+    fn get_all_threads(&self) -> Result<Vec<JavaThread>, NativeError> {
+        let mut threads_count_ptr: c_int = 0;
+        let mut threads_ptr: *mut JavaThread = ptr::null_mut();
+
+        unsafe {
+            match wrap_error((**self.jvmti).GetAllThreads.unwrap()(self.jvmti, &mut threads_count_ptr, &mut threads_ptr)) {
+                NativeError::NoError => {
+                    let mut vec = Vec::new();
+
+                    for _ in 0..threads_count_ptr {
+                        let thread = threads_ptr.read();
+                        threads_ptr = threads_ptr.add(1);
+
+                        vec.push(JavaThread::from(thread))
+                    }
+
+                    Ok(vec)
+                }
+                err @ _ => Err(err)
+            }
         }
     }
 

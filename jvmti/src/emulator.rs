@@ -54,6 +54,10 @@ impl JVMTI for JVMEmulator {
         VersionNumber::unknown()
     }
 
+    fn get_all_threads(&self) -> Result<Vec<JavaThread>, NativeError> {
+        Err(NativeError::NotAvailable)
+    }
+
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError> {
         let merged = self.capabilities.merge(&new_capabilities);
         self.capabilities = merged;

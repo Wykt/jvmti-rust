@@ -34,6 +34,10 @@ impl JVMTI for Environment {
         self.jvmti.get_version_number()
     }
 
+    fn get_all_threads(&self) -> Result<Vec<JavaThread>, NativeError> {
+        self.jvmti.get_all_threads()
+    }
+
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError> {
         self.jvmti.add_capabilities(new_capabilities)
     }
