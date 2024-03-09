@@ -1,4 +1,4 @@
-use crate::native::jvmti_native::{jobject};
+use crate::native::jvmti_native::jobject;
 
 use super::native::JavaThread;
 
