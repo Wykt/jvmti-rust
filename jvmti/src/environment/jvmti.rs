@@ -1,4 +1,6 @@
 
+use crate::native::jvmti_native::Struct__jvmtiClassDefinition;
+
 use super::super::capabilities::Capabilities;
 use super::super::class::{ClassId, ClassSignature, JavaType};
 use super::super::error::{wrap_error, NativeError};
@@ -33,6 +35,7 @@ pub trait JVMTI {
     /// function and set_event_notification_mode are called does not affect the result.
     fn set_event_callbacks(&mut self, callbacks: EventCallbacks) -> Option<NativeError>;
     fn set_event_notification_mode(&mut self, event: VMEvent, mode: bool) -> Option<NativeError>;
+    fn redefine_classes(&self, class_definitions: &[JVMTIClassDefinition]) -> Result<(), NativeError>;
     fn get_all_threads(&self) -> Result<Vec<JavaThread>, NativeError>;
     fn get_thread_info(&self, thread_id: &JavaThread) -> Result<Thread, NativeError>;
     fn get_method_declaring_class(&self, method_id: &MethodId) -> Result<ClassId, NativeError>;
@@ -45,6 +48,11 @@ pub trait JVMTI {
 pub struct JVMTIEnvironment {
 
     jvmti: JVMTIEnvPtr
+}
+
+pub struct JVMTIClassDefinition {
+    pub class: JavaClass,
+    pub class_data: Vec<u8>
 }
 
 impl JVMTIEnvironment {
@@ -62,6 +70,29 @@ impl JVMTI for JVMTIEnvironment {
             (**self.jvmti).GetVersionNumber.unwrap()(self.jvmti, version_ptr);
             let uversion = *version_ptr as u32;
             VersionNumber::from_u32(&uversion)
+        }
+    }
+
+    fn redefine_classes(&self, class_definitions: &[JVMTIClassDefinition]) -> Result<(), NativeError> {
+        let classes_count: c_int = class_definitions.len() as i32;
+        let mut jvmti_class_definitions = Vec::<Struct__jvmtiClassDefinition>::new();
+
+        for class_def in class_definitions {
+            jvmti_class_definitions.push(Struct__jvmtiClassDefinition {
+                klass: class_def.class,
+                class_byte_count: class_def.class_data.len() as i32,
+                class_bytes: class_def.class_data.as_ptr(),
+            })
+        }
+
+
+        unsafe {
+            match wrap_error((**self.jvmti).RedefineClasses.unwrap()(self.jvmti, classes_count, jvmti_class_definitions.as_ptr())) {
+                NativeError::NoError => {
+                    Ok(())
+                },
+                err @ _ => Err(err)
+            }
         }
     }
 

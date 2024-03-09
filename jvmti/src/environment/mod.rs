@@ -38,6 +38,10 @@ impl JVMTI for Environment {
         self.jvmti.get_all_threads()
     }
 
+    fn redefine_classes(&self, class_definitions: &[jvmti::JVMTIClassDefinition]) -> Result<(), NativeError> {
+        self.jvmti.redefine_classes(class_definitions)
+    }
+
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError> {
         self.jvmti.add_capabilities(new_capabilities)
     }

@@ -58,6 +58,10 @@ impl JVMTI for JVMEmulator {
         Err(NativeError::NotAvailable)
     }
 
+    fn redefine_classes(&self, _: &[crate::environment::jvmti::JVMTIClassDefinition]) -> Result<(), NativeError> {
+        Err(NativeError::NotAvailable)
+    }
+
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError> {
         let merged = self.capabilities.merge(&new_capabilities);
         self.capabilities = merged;
