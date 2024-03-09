@@ -27,6 +27,7 @@ pub trait JVMTI {
     /// Some virtual machines may allow a limited set of capabilities to be added in the live phase.
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError>;
     fn get_capabilities(&self) -> Capabilities;
+    fn get_class_loader_loaded_classes(&self, class_loader: JavaObject) -> Result<Vec<JavaClass>, NativeError>;
     fn get_loaded_classes(&self) -> Result<Vec<JavaClass>, NativeError>;
     /// Set the functions to be called for each event. The callbacks are specified by supplying a
     /// replacement function table. The function table is copied--changes to the local copy of the
@@ -81,6 +82,29 @@ impl JVMTI for JVMTIEnvironment {
 
         unsafe {
             match wrap_error((**self.jvmti).GetLoadedClasses.unwrap()(self.jvmti, &mut classes_count_ptr, &mut classes_ptr)) {
+                NativeError::NoError => {
+                    let mut classes = Vec::<jclass>::new();
+
+                    for _ in 0..classes_count_ptr {
+                        let class = JavaClass::from(classes_ptr.read());
+                        classes_ptr = classes_ptr.add(1);
+
+                        classes.push(class)
+                    }
+
+                    Ok(classes)
+                }
+                err @ _ => Err(err)
+            } 
+        }
+    }
+
+    fn get_class_loader_loaded_classes(&self, class_loader: JavaObject) -> Result<Vec<JavaClass>, NativeError> {
+        let mut classes_count_ptr: c_int = 0;
+        let mut classes_ptr: *mut jclass = null_mut();
+
+        unsafe {
+            match wrap_error((**self.jvmti).GetClassLoaderClasses.unwrap()(self.jvmti, class_loader, &mut classes_count_ptr, &mut classes_ptr)) {
                 NativeError::NoError => {
                     let mut classes = Vec::<jclass>::new();
 
