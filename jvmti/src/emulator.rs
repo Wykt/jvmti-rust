@@ -58,6 +58,10 @@ impl JVMTI for JVMEmulator {
         Err(NativeError::NotAvailable)
     }
 
+    fn get_loaded_classes(&self) -> Result<Vec<crate::native::JavaClass>, NativeError> {
+        Err(NativeError::NotAvailable)
+    }
+
     fn redefine_classes(&self, _: &[crate::environment::jvmti::JVMTIClassDefinition]) -> Result<(), NativeError> {
         Err(NativeError::NotAvailable)
     }

@@ -42,6 +42,10 @@ impl JVMTI for Environment {
         self.jvmti.redefine_classes(class_definitions)
     }
 
+    fn get_loaded_classes(&self) -> Result<Vec<crate::native::JavaClass>, NativeError> {
+        self.jvmti.get_loaded_classes()
+    }
+
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError> {
         self.jvmti.add_capabilities(new_capabilities)
     }

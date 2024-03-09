@@ -1,5 +1,5 @@
 
-use crate::native::jvmti_native::Struct__jvmtiClassDefinition;
+use crate::native::jvmti_native::{jclass, Struct__jvmtiClassDefinition};
 
 use super::super::capabilities::Capabilities;
 use super::super::class::{ClassId, ClassSignature, JavaType};
@@ -13,7 +13,7 @@ use super::super::util::stringify;
 use super::super::version::VersionNumber;
 use super::super::native::{MutString, MutByteArray, JavaClass, JavaObject, JavaInstance, JavaLong, JavaThread, JVMTIEnvPtr};
 use super::super::native::jvmti_native::{Struct__jvmtiThreadInfo, jvmtiCapabilities};
-use std::ptr::{self};
+use std::ptr::{self, null_mut};
 use libc::c_int;
 
 pub trait JVMTI {
@@ -27,6 +27,7 @@ pub trait JVMTI {
     /// Some virtual machines may allow a limited set of capabilities to be added in the live phase.
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError>;
     fn get_capabilities(&self) -> Capabilities;
+    fn get_loaded_classes(&self) -> Result<Vec<JavaClass>, NativeError>;
     /// Set the functions to be called for each event. The callbacks are specified by supplying a
     /// replacement function table. The function table is copied--changes to the local copy of the
     /// table have no effect. This is an atomic action, all callbacks are set at once. No events
@@ -70,6 +71,29 @@ impl JVMTI for JVMTIEnvironment {
             (**self.jvmti).GetVersionNumber.unwrap()(self.jvmti, version_ptr);
             let uversion = *version_ptr as u32;
             VersionNumber::from_u32(&uversion)
+        }
+    }
+
+    fn get_loaded_classes(&self) -> Result<Vec<JavaClass>, NativeError> {
+        let mut classes_count_ptr: c_int = 0;
+        let mut classes_ptr: *mut jclass = null_mut();
+
+        unsafe {
+            match wrap_error((**self.jvmti).GetLoadedClasses.unwrap()(self.jvmti, &mut classes_count_ptr, &mut classes_ptr)) {
+                NativeError::NoError => {
+                    let mut classes = Vec::<jclass>::new();
+
+                    for _ in 0..classes_count_ptr {
+                        let class = JavaClass::from(classes_ptr.read());
+                        classes_ptr = classes_ptr.add(1);
+
+                        classes.push(class)
+                    }
+
+                    Ok(classes)
+                }
+                err @ _ => Err(err)
+            } 
         }
     }
 
