@@ -42,6 +42,10 @@ impl JVMTI for Environment {
         self.jvmti.redefine_classes(class_definitions)
     }
 
+    fn retransform_classes(&self, classes: &[crate::native::JavaClass]) -> Result<(), NativeError> {
+        self.jvmti.retransform_classes(classes)
+    }
+
     fn get_loaded_classes(&self) -> Result<Vec<crate::native::JavaClass>, NativeError> {
         self.jvmti.get_loaded_classes()
     }

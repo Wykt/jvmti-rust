@@ -37,6 +37,7 @@ pub trait JVMTI {
     fn set_event_callbacks(&mut self, callbacks: EventCallbacks) -> Option<NativeError>;
     fn set_event_notification_mode(&mut self, event: VMEvent, mode: bool) -> Option<NativeError>;
     fn redefine_classes(&self, class_definitions: &[JVMTIClassDefinition]) -> Result<(), NativeError>;
+    fn retransform_classes(&self, classes: &[JavaClass]) -> Result<(), NativeError>;
     fn get_all_threads(&self) -> Result<Vec<JavaThread>, NativeError>;
     fn get_thread_info(&self, thread_id: &JavaThread) -> Result<Thread, NativeError>;
     fn get_method_declaring_class(&self, method_id: &MethodId) -> Result<ClassId, NativeError>;
@@ -97,6 +98,18 @@ impl JVMTI for JVMTIEnvironment {
         }
     }
 
+    fn retransform_classes(&self, classes: &[JavaClass]) -> Result<(), NativeError> {
+        let class_count: i32 = classes.len() as i32;
+        let classes = classes.as_ptr();
+
+        unsafe {
+            match wrap_error((**self.jvmti).RetransformClasses.unwrap()(self.jvmti, class_count, classes)) {
+                NativeError::NoError => Ok(()),
+                err @ _ => Err(err)
+            }
+        }
+    }
+
     fn redefine_classes(&self, class_definitions: &[JVMTIClassDefinition]) -> Result<(), NativeError> {
         let classes_count: c_int = class_definitions.len() as i32;
         let mut jvmti_class_definitions = Vec::<Struct__jvmtiClassDefinition>::new();
@@ -108,7 +121,6 @@ impl JVMTI for JVMTIEnvironment {
                 class_bytes: class_def.class_data.as_ptr(),
             })
         }
-
 
         unsafe {
             match wrap_error((**self.jvmti).RedefineClasses.unwrap()(self.jvmti, classes_count, jvmti_class_definitions.as_ptr())) {
