@@ -258,7 +258,8 @@ impl JVMTI for JVMTIEnvironment {
                             id: ThreadId { native_id: *thread_id },
                             name: stringify((*info_ptr).name),
                             priority: (*info_ptr).priority as u32,
-                            is_daemon: if (*info_ptr).is_daemon > 0 { true } else { false }
+                            is_daemon: if (*info_ptr).is_daemon > 0 { true } else { false },
+                            context_class_loader: &mut *info_ptr.context_class_loader
                         }),
                         err@_ => Err(err)
                     }

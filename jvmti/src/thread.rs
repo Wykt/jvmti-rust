@@ -1,3 +1,5 @@
+use crate::native::jvmti_native::{jobject};
+
 use super::native::JavaThread;
 
 ///
@@ -18,5 +20,6 @@ pub struct Thread {
     pub id: ThreadId,
     pub name: String,
     pub priority: u32,
-    pub is_daemon: bool
+    pub is_daemon: bool,
+    pub context_class_loader: jobject
 }
