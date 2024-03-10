@@ -24,7 +24,7 @@ impl Agent {
                 jvm: Box::new(jvm_agent),
                 capabilities: Capabilities::new(),
                 callbacks: EventCallbacks::new(),
-                environment: environment
+                environment
             },
             Err(err) => panic!("FATAL: Could not get JVMTI environment: {}", translate_error(&err))
         }
@@ -35,10 +35,10 @@ impl Agent {
     pub fn new_from(jvm: Box<dyn JVMF>) -> Agent {
         match jvm.get_environment() {
             Ok(environment) => Agent {
-                jvm: jvm,
+                jvm,
                 capabilities: Capabilities::new(),
                 callbacks: EventCallbacks::new(),
-                environment: environment
+                environment
             },
             Err(err) => panic!("FATAL: Could not get JVMTI environment: {}", translate_error(&err))
         }

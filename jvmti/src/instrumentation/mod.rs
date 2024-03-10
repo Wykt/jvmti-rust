@@ -52,8 +52,8 @@ pub struct Field {
 impl Field {
     pub fn new(name: String, field_type: JavaType) -> Field {
         Field {
-            name: name,
-            field_type: field_type
+            name,
+            field_type
         }
     }
 }
@@ -67,7 +67,7 @@ pub struct Method {
 impl Method {
     pub fn new(name: String) -> Method {
         Method {
-            name: name,
+            name,
             return_type: JavaType::Void
         }
     }

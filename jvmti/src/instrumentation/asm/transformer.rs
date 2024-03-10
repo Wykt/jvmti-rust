@@ -9,7 +9,7 @@ impl<'a> Transformer<'a> {
 
     pub fn new(class: &mut Classfile) -> Transformer {
         Transformer {
-            class: class
+            class
         }
     }
 

@@ -25,7 +25,7 @@ impl Class {
         }
     }
 
-    pub fn set_version(&mut self, new_version: ClassfileVersion) -> () {
+    pub fn set_version(&mut self, new_version: ClassfileVersion) {
         self.version = new_version;
     }
 
