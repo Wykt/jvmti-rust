@@ -112,37 +112,44 @@ pub fn wrap_error(code: u32) -> NativeError {
 }
 
 /// Turn native error codes into meaningful and user-readable strings
-pub fn translate_error(code: &NativeError) -> String {
+pub fn translate_error(code: &NativeError) -> &str {
     match code {
-        &NativeError::NoError => "No error has occurred.",
-        &NativeError::InvalidPriority => "priority is less than JVMTI_THREAD_MIN_PRIORITY or greater than JVMTI_THREAD_MAX_PRIORITY",
-        &NativeError::InvalidThread => "thread is not a thread object.",
-        &NativeError::InvalidObject => "Invalid object.",
-        &NativeError::InvalidClass => "Invalid class.",
-        &NativeError::InvalidLocation => "Invalid location.",
-        &NativeError::InvalidFieldId => "Invalid field.",
-        &NativeError::InvalidThreadGroup => "thread is not a thread group object.",
-        &NativeError::FailsVerification => "The retransformed class file bytes fail verification.",
-        &NativeError::InvalidClassFormat => "A new class file is malformed (The VM would return a ClassFormatError).",
-        &NativeError::UnsupportedRedefinitionMethodAdded => "A retransformed class file would require adding a method.",
-        &NativeError::UnsupportedVersion => "A new class file has a version number not supported by this VM.",
-        &NativeError::MustPossessCapability => "The environment does not possess the capability can_redefine_classes. Use AddCapabilities.",
-        &NativeError::UnmodifiableClass => "An element of class_definitions cannot be modified. See IsModifiableClass.",
-        &NativeError::UnsupportedRedefinitionSchemaChanged => "A new class version changes a field.",
-        &NativeError::NamesDontMatch => "The class name defined in a new class file is different from the name in the old class object.",
-        &NativeError::UnsupportedRedefinitionMethodModifiersChanged => "A method in the new class version has different modifiers than its counterpart in the old class version.",
-        &NativeError::UnsupportedRedefinitionClassModifiersChanged => "A new class version has different modifiers.",
-        &NativeError::UnsupportedRedefinitionMethodDeleted => "A new class version does not declare a method declared in the old class version.",
-        &NativeError::UnsupportedRedefinitionHierarchyChanged => "A direct superclass is different for a new class version, or the set of directly implemented interfaces is different.",
-        &NativeError::NullPointer => "Pointer is unexpectedly NULL.",
-        &NativeError::OutOfMemory => "The function attempted to allocate memory and no more memory was available for allocation.",
-        &NativeError::AccessDenied => "The desired functionality has not been enabled in this virtual machine.",
-        &NativeError::NotAvailable => "The desired functionality is not available in the current phase. Always returned if the virtual machine has completed running.",
-        &NativeError::UnexpectedInternalError => "An unexpected internal error has occurred.",
-        &NativeError::ThreadNotAttached => "The thread being used to call this function is not attached to the virtual machine. Calls must be made from attached threads.",
-        &NativeError::Disconnected => "The JVM TI environment provided is no longer connected or is not an environment.",
-        &NativeError::NotImplemented => "This function is not implemented yet",
-        &NativeError::UnknownError => "Unknown error.",
+        NativeError::NoError => "No error has occurred.",
+        NativeError::InvalidPriority => "priority is less than JVMTI_THREAD_MIN_PRIORITY or greater than JVMTI_THREAD_MAX_PRIORITY",
+        NativeError::InvalidThread => "thread is not a thread object.",
+        NativeError::InvalidObject => "Invalid object.",
+        NativeError::InvalidClass => "Invalid class.",
+        NativeError::InvalidLocation => "Invalid location.",
+        NativeError::InvalidFieldId => "Invalid field.",
+        NativeError::InvalidThreadGroup => "thread is not a thread group object.",
+        NativeError::FailsVerification => "The retransformed class file bytes fail verification.",
+        NativeError::InvalidClassFormat => "A new class file is malformed (The VM would return a ClassFormatError).",
+        NativeError::UnsupportedRedefinitionMethodAdded => "A retransformed class file would require adding a method.",
+        NativeError::UnsupportedVersion => "A new class file has a version number not supported by this VM.",
+        NativeError::MustPossessCapability => "The environment does not possess the capability can_redefine_classes. Use AddCapabilities.",
+        NativeError::UnmodifiableClass => "An element of class_definitions cannot be modified. See IsModifiableClass.",
+        NativeError::UnsupportedRedefinitionSchemaChanged => "A new class version changes a field.",
+        NativeError::NamesDontMatch => "The class name defined in a new class file is different from the name in the old class object.",
+        NativeError::UnsupportedRedefinitionMethodModifiersChanged => "A method in the new class version has different modifiers than its counterpart in the old class version.",
+        NativeError::UnsupportedRedefinitionClassModifiersChanged => "A new class version has different modifiers.",
+        NativeError::UnsupportedRedefinitionMethodDeleted => "A new class version does not declare a method declared in the old class version.",
+        NativeError::UnsupportedRedefinitionHierarchyChanged => "A direct superclass is different for a new class version, or the set of directly implemented interfaces is different.",
+        NativeError::NullPointer => "Pointer is unexpectedly NULL.",
+        NativeError::OutOfMemory => "The function attempted to allocate memory and no more memory was available for allocation.",
+        NativeError::AccessDenied => "The desired functionality has not been enabled in this virtual machine.",
+        NativeError::NotAvailable => "The desired functionality is not available in the current phase. Always returned if the virtual machine has completed running.",
+        NativeError::UnexpectedInternalError => "An unexpected internal error has occurred.",
+        NativeError::ThreadNotAttached => "The thread being used to call this function is not attached to the virtual machine. Calls must be made from attached threads.",
+        NativeError::Disconnected => "The JVM TI environment provided is no longer connected or is not an environment.",
+        NativeError::NotImplemented => "This function is not implemented yet",
+        NativeError::UnknownError => "Unknown error.",
         _ => "Unhandled error."
-    }.to_string()
+    }
+}
+
+impl core::fmt::Display for NativeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        let translated_error = translate_error(self);
+        write!(f, "{}", translated_error)
+    }
 }
