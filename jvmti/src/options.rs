@@ -15,8 +15,8 @@ impl Options {
     pub fn parse(opt_args: String) -> Options {
         let mut options = Options::default();
 
-        if opt_args.len() > 0 {
-            for arg in opt_args.split(",") {
+        if opt_args.is_empty() {
+            for arg in opt_args.split(',') {
                 match arg.find('=') {
                     Some(position) => {
                         let (key, value) = arg.split_at(position);
@@ -40,9 +40,11 @@ impl Options {
     }
 
     fn parse_directive(options: &mut Options, directive: &str) {
-        match directive {
+        /*match directive {
             _ => options.custom_args.insert(directive.to_string(), "".to_string())
-        };
+        };*/
+
+        options.custom_args.insert(directive.to_string(), "".to_string());
     }
 
     /// Return the default configuration options

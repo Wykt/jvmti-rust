@@ -29,11 +29,8 @@ impl JVMEmulator {
     }
 
     pub fn emit_method_entry(&self, event: MethodInvocationEvent) {
-        match self.callbacks.method_entry {
-            Some(handler) => {
-                handler(event);
-            },
-            _ => ()
+        if let Some(handler) = self.callbacks.method_entry {
+            handler(event);
         }
     }
 }
@@ -75,7 +72,7 @@ impl JVMTI for JVMEmulator {
     }
 
     fn add_capabilities(&mut self, new_capabilities: &Capabilities) -> Result<Capabilities, NativeError> {
-        let merged = self.capabilities.merge(&new_capabilities);
+        let merged = self.capabilities.merge(new_capabilities);
         self.capabilities = merged;
         Ok(self.capabilities.clone())
     }
@@ -95,16 +92,20 @@ impl JVMTI for JVMEmulator {
         None
     }
 
-    fn get_thread_info(&self, thread_id: &JavaThread) -> Result<Thread, NativeError> {
-        match *thread_id as u64 {
+    fn get_thread_info(&self, _thread_id: &JavaThread) -> Result<Thread, NativeError> {
+        /*match *thread_id as u64 {
             _ => Err(NativeError::NotImplemented)
-        }
+        }*/
+
+        Err(NativeError::NotImplemented)
     }
 
-    fn get_method_declaring_class(&self, method_id: &MethodId) -> Result<ClassId, NativeError> {
-        match method_id.native_id as u64 {
+    fn get_method_declaring_class(&self, _method_id: &MethodId) -> Result<ClassId, NativeError> {
+        /*match method_id.native_id as u64 {
             _ => Err(NativeError::NotImplemented)
-        }
+        }*/
+
+        Err(NativeError::NotImplemented)
     }
 
     fn get_method_name(&self, method_id: &MethodId) -> Result<MethodSignature, NativeError> {
@@ -114,14 +115,16 @@ impl JVMTI for JVMEmulator {
         }
     }
 
-    fn get_class_signature(&self, class_id: &ClassId) -> Result<ClassSignature, NativeError> {
-        match class_id.native_id as u64 {
+    fn get_class_signature(&self, _class_id: &ClassId) -> Result<ClassSignature, NativeError> {
+        /*match class_id.native_id as u64 {
             _ => Err(NativeError::NotImplemented)
-        }
+        }*/
+
+        Err(NativeError::NotImplemented)
     }
 
     fn allocate(&self, len: usize) -> Result<MemoryAllocation, NativeError> {
-        Ok(MemoryAllocation { ptr: ::std::ptr::null_mut(), len: len })
+        Ok(MemoryAllocation { ptr: ::std::ptr::null_mut(), len })
     }
 
     fn deallocate(&self) {

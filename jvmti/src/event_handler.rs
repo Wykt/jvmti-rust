@@ -177,7 +177,7 @@ pub fn local_event_callbacks() -> jvmtiEventCallbacks {
 
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_vm_object_alloc(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: JavaThread, object: JavaObject, object_klass: JavaClass, size: jlong) -> () {
+unsafe extern "C" fn local_cb_vm_object_alloc(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: JavaThread, object: JavaObject, object_klass: JavaClass, size: jlong) {
     match CALLBACK_TABLE.vm_object_alloc {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -185,7 +185,7 @@ unsafe extern "C" fn local_cb_vm_object_alloc(jvmti_env: *mut jvmtiEnv, jni_env:
                 Ok(current_thread) => {
                     let class_id = env.get_object_class(&object);
 
-                    function(ObjectAllocationEvent { class_id: class_id, size: size as i64, thread: current_thread })
+                    function(ObjectAllocationEvent { class_id, size: size as i64, thread: current_thread })
                 },
                 Err(err) => {
                     match err {
@@ -200,7 +200,7 @@ unsafe extern "C" fn local_cb_vm_object_alloc(jvmti_env: *mut jvmtiEnv, jni_env:
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_method_entry(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: JavaThread, method: JavaMethod) -> () {
+unsafe extern "C" fn local_cb_method_entry(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: JavaThread, method: JavaMethod) {
     match CALLBACK_TABLE.method_entry {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -211,7 +211,7 @@ unsafe extern "C" fn local_cb_method_entry(jvmti_env: *mut jvmtiEnv, jni_env: *m
                     let class_sig = env.get_class_signature(&class_id).ok().unwrap();
                     let method_sig = env.get_method_name(&method_id).ok().unwrap();
 
-                    function(MethodInvocationEvent { method_id: method_id, method_sig: method_sig, class_sig: class_sig, thread: current_thread })
+                    function(MethodInvocationEvent { method_id, method_sig, class_sig, thread: current_thread })
 
                 },
                 Err(err) => {
@@ -227,7 +227,7 @@ unsafe extern "C" fn local_cb_method_entry(jvmti_env: *mut jvmtiEnv, jni_env: *m
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_method_exit(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, was_popped_by_exception: jboolean, return_value: jvalue) -> () {
+unsafe extern "C" fn local_cb_method_exit(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, was_popped_by_exception: jboolean, return_value: jvalue) {
     match CALLBACK_TABLE.method_exit {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -238,7 +238,7 @@ unsafe extern "C" fn local_cb_method_exit(jvmti_env: *mut jvmtiEnv, jni_env: *mu
                     let class_sig = env.get_class_signature(&class_id).ok().unwrap();
                     let method_sig = env.get_method_name(&method_id).ok().unwrap();
 
-                    function(MethodInvocationEvent { method_id: method_id, method_sig: method_sig, class_sig: class_sig, thread: current_thread })
+                    function(MethodInvocationEvent { method_id, method_sig, class_sig, thread: current_thread })
 
                 },
                 Err(err) => {
@@ -254,7 +254,7 @@ unsafe extern "C" fn local_cb_method_exit(jvmti_env: *mut jvmtiEnv, jni_env: *mu
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_exception(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation, exception: JavaObject, catch_method: jmethodID, catch_location: jlocation) -> () {
+unsafe extern "C" fn local_cb_exception(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation, exception: JavaObject, catch_method: jmethodID, catch_location: jlocation) {
     match CALLBACK_TABLE.exception {
         Some(function) => {
             function();
@@ -268,7 +268,7 @@ unsafe extern "C" fn local_cb_exception(jvmti_env: *mut jvmtiEnv, jni_env: *mut 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_exception_catch(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation, exception: jobject) -> () {
+unsafe extern "C" fn local_cb_exception_catch(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation, exception: jobject) {
     match CALLBACK_TABLE.exception_catch {
         Some(function) => {
             function();
@@ -284,7 +284,7 @@ unsafe extern "C" fn local_cb_exception_catch(jvmti_env: *mut jvmtiEnv, jni_env:
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_monitor_wait(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject, timeout: jlong) -> () {
+unsafe extern "C" fn local_cb_monitor_wait(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject, timeout: jlong) {
     match CALLBACK_TABLE.monitor_wait {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -303,7 +303,7 @@ unsafe extern "C" fn local_cb_monitor_wait(jvmti_env: *mut jvmtiEnv, jni_env: *m
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_monitor_waited(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject, timed_out: jboolean) -> () {
+unsafe extern "C" fn local_cb_monitor_waited(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject, timed_out: jboolean) {
     match CALLBACK_TABLE.monitor_waited {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -322,7 +322,7 @@ unsafe extern "C" fn local_cb_monitor_waited(jvmti_env: *mut jvmtiEnv, jni_env: 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_monitor_contended_enter(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject) -> () {
+unsafe extern "C" fn local_cb_monitor_contended_enter(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject) {
     match CALLBACK_TABLE.monitor_contended_enter {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -341,7 +341,7 @@ unsafe extern "C" fn local_cb_monitor_contended_enter(jvmti_env: *mut jvmtiEnv, 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_monitor_contended_entered(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject) -> () {
+unsafe extern "C" fn local_cb_monitor_contended_entered(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, object: jobject) {
     match CALLBACK_TABLE.monitor_contended_entered {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -360,7 +360,7 @@ unsafe extern "C" fn local_cb_monitor_contended_entered(jvmti_env: *mut jvmtiEnv
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_thread_start(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread) -> () {
+unsafe extern "C" fn local_cb_thread_start(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread) {
     match CALLBACK_TABLE.thread_start {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -380,7 +380,7 @@ unsafe extern "C" fn local_cb_thread_start(jvmti_env: *mut jvmtiEnv, jni_env: *m
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_thread_end(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread) -> () {
+unsafe extern "C" fn local_cb_thread_end(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread) {
     match CALLBACK_TABLE.thread_end {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -399,7 +399,7 @@ unsafe extern "C" fn local_cb_thread_end(jvmti_env: *mut jvmtiEnv, jni_env: *mut
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_garbage_collection_start(jvmti_env: *mut jvmtiEnv) -> () {
+unsafe extern "C" fn local_cb_garbage_collection_start(jvmti_env: *mut jvmtiEnv) {
     match CALLBACK_TABLE.garbage_collection_start {
         Some(function) => {
             function();
@@ -411,7 +411,7 @@ unsafe extern "C" fn local_cb_garbage_collection_start(jvmti_env: *mut jvmtiEnv)
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_garbage_collection_finish(jvmti_env: *mut jvmtiEnv) -> () {
+unsafe extern "C" fn local_cb_garbage_collection_finish(jvmti_env: *mut jvmtiEnv) {
     match CALLBACK_TABLE.garbage_collection_finish {
         Some(function) => {
             function();
@@ -423,14 +423,14 @@ unsafe extern "C" fn local_cb_garbage_collection_finish(jvmti_env: *mut jvmtiEnv
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_breakpoint(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation) -> () {
+unsafe extern "C" fn local_cb_breakpoint(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation) {
 
 }
 
 #[allow(unused_variables)]
 unsafe extern "C" fn local_cb_class_file_load_hook(jvmti_env: JVMTIEnvPtr, jni_env: JNIEnvPtr, class_being_redefined: JavaClass, loader: JavaObject,
                                                    name: *const c_char, protection_domain: JavaObject, class_data_len: jint, class_data: *const c_uchar,
-                                                   new_class_data_len: *mut jint, new_class_data: *mut *mut c_uchar) -> () {
+                                                   new_class_data_len: *mut jint, new_class_data: *mut *mut c_uchar)  {
     match CALLBACK_TABLE.class_file_load_hook {
         Some(function) => {
             let env = Environment::new(JVMTIEnvironment::new(jvmti_env), JNIEnvironment::new(jni_env));
@@ -441,22 +441,19 @@ unsafe extern "C" fn local_cb_class_file_load_hook(jvmti_env: JVMTIEnvPtr, jni_e
             ptr::copy_nonoverlapping(class_data, data_ptr, class_data_len as usize);
             raw_data.set_len(class_data_len as usize);
 
-            match function(ClassFileLoadEvent { class_name: stringify(name), class_data: raw_data}) {
-                Some(transformed) => {
-                    println!("Transformed class {}", stringify(name));
+            if let Some(transformed) = function(ClassFileLoadEvent { class_name: stringify(name), class_data: raw_data}) {
+                println!("Transformed class {}", stringify(name));
 
-                    match env.allocate(transformed.len()) {
-                        Ok(allocation) => {
-                            ptr::copy_nonoverlapping(transformed.as_ptr(), allocation.ptr, allocation.len);
-                            *new_class_data_len = allocation.len as i32;
-                            *new_class_data = allocation.ptr;
-                        },
-                        Err(err) => {
-                            println!("Failed to allocate memory")
-                        }
+                match env.allocate(transformed.len()) {
+                    Ok(allocation) => {
+                        ptr::copy_nonoverlapping(transformed.as_ptr(), allocation.ptr, allocation.len);
+                        *new_class_data_len = allocation.len as i32;
+                        *new_class_data = allocation.ptr;
+                    },
+                    Err(err) => {
+                        println!("Failed to allocate memory")
                     }
-                },
-                None => ()
+                }
             }
         },
         None => println!("No dynamic callback method was found for class file load events")
@@ -473,39 +470,39 @@ fn parse_class(data: &Vec<u8>) -> Result<Classfile, ::std::io::Error> {
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_class_load(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, klass: jclass) -> () {
+unsafe extern "C" fn local_cb_class_load(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, klass: jclass) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_class_prepare(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, klass: jclass) -> () {
+unsafe extern "C" fn local_cb_class_prepare(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, klass: jclass) {
 
 }
 
 #[allow(unused_variables)]
 unsafe extern "C" fn local_cb_compiled_method_load(jvmti_env: *mut jvmtiEnv, method: jmethodID, code_size: jint, code_addr: *const c_void, map_length: jint,
-                                                   map: *const jvmtiAddrLocationMap, compile_info: *const c_void) -> () {
+                                                   map: *const jvmtiAddrLocationMap, compile_info: *const c_void) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_compiled_method_unload(jvmti_env: *mut jvmtiEnv, method: jmethodID, code_addr: *const c_void) -> () {
+unsafe extern "C" fn local_cb_compiled_method_unload(jvmti_env: *mut jvmtiEnv, method: jmethodID, code_addr: *const c_void) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_data_dump_request(jvmti_env: *mut jvmtiEnv) -> () {
+unsafe extern "C" fn local_cb_data_dump_request(jvmti_env: *mut jvmtiEnv) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_dynamic_code_generated(jvmti_env: *mut jvmtiEnv, name: *const c_char, address: *const c_void, length: jint) -> () {
+unsafe extern "C" fn local_cb_dynamic_code_generated(jvmti_env: *mut jvmtiEnv, name: *const c_char, address: *const c_void, length: jint) {
 
 }
 
 #[allow(unused_variables)]
 unsafe extern "C" fn local_cb_field_access(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation,
-                                                   field_klass: jclass, object: jobject, field: jfieldID) -> () {
+                                                   field_klass: jclass, object: jobject, field: jfieldID) {
     match CALLBACK_TABLE.field_access {
         Some(function) => {
             function();
@@ -516,7 +513,7 @@ unsafe extern "C" fn local_cb_field_access(jvmti_env: *mut jvmtiEnv, jni_env: *m
 
 #[allow(unused_variables)]
 unsafe extern "C" fn local_cb_field_modification(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation,
-                                                   field_klass: jclass, object: jobject, field: jfieldID, signature_type: c_char, new_value: jvalue) -> () {
+                                                   field_klass: jclass, object: jobject, field: jfieldID, signature_type: c_char, new_value: jvalue) {
     match CALLBACK_TABLE.field_modification {
         Some(function) => {
             function();
@@ -526,33 +523,33 @@ unsafe extern "C" fn local_cb_field_modification(jvmti_env: *mut jvmtiEnv, jni_e
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_frame_pop(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, was_popped_by_exception: jboolean) -> () {
+unsafe extern "C" fn local_cb_frame_pop(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, was_popped_by_exception: jboolean) {
 
 }
 
 #[allow(unused_variables)]
 unsafe extern "C" fn local_cb_native_method_bind(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, address: *mut c_void,
-                                                   new_address_ptr: *mut *mut c_void) -> () {
+                                                   new_address_ptr: *mut *mut c_void) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_object_free(jvmti_env: *mut jvmtiEnv, tag: jlong) -> () {
+unsafe extern "C" fn local_cb_object_free(jvmti_env: *mut jvmtiEnv, tag: jlong) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_resource_exhausted(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, flags: jint, reserved: *const c_void, description: *const c_char) -> () {
+unsafe extern "C" fn local_cb_resource_exhausted(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, flags: jint, reserved: *const c_void, description: *const c_char) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_single_step(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation) -> () {
+unsafe extern "C" fn local_cb_single_step(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread, method: jmethodID, location: jlocation) {
 
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_vm_death(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv) -> () {
+unsafe extern "C" fn local_cb_vm_death(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv) {
 
     match CALLBACK_TABLE.vm_death {
         Some(function) => {
@@ -563,7 +560,7 @@ unsafe extern "C" fn local_cb_vm_death(jvmti_env: *mut jvmtiEnv, jni_env: *mut J
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_vm_init(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread) -> () {
+unsafe extern "C" fn local_cb_vm_init(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv, thread: jthread) {
 
     match CALLBACK_TABLE.vm_init {
         Some(function) => {
@@ -574,7 +571,7 @@ unsafe extern "C" fn local_cb_vm_init(jvmti_env: *mut jvmtiEnv, jni_env: *mut JN
 }
 
 #[allow(unused_variables)]
-unsafe extern "C" fn local_cb_vm_start(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv) -> () {
+unsafe extern "C" fn local_cb_vm_start(jvmti_env: *mut jvmtiEnv, jni_env: *mut JNIEnv) {
     match CALLBACK_TABLE.vm_start {
         Some(function) => {
             function();

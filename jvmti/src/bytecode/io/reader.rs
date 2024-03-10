@@ -102,10 +102,10 @@ impl ClassReader {
                 },
                 Err(err) => Err(err)
             },
-            Ok(3) => reader.read_u32().map(|value| Constant::Integer(value)),
-            Ok(4) => reader.read_u32().map(|value| Constant::Float(value)),
-            Ok(5) => reader.read_u64().map(|value| Constant::Long(value)),
-            Ok(6) => reader.read_u64().map(|value| Constant::Double(value)),
+            Ok(3) => reader.read_u32().map(Constant::Integer),
+            Ok(4) => reader.read_u32().map(Constant::Float),
+            Ok(5) => reader.read_u64().map(Constant::Long),
+            Ok(6) => reader.read_u64().map(Constant::Double),
             Ok(7) => reader.read_u16().map(|idx| Constant::Class(ConstantPoolIndex::new(idx as usize))),
             Ok(8) => reader.read_u16().map(|idx| Constant::String(ConstantPoolIndex::new(idx as usize))),
             Ok(9) => ClassReader::require_n(reader, 4, |mut r| Constant::FieldRef {
@@ -259,7 +259,7 @@ impl ClassReader {
                     access_flags: AccessFlags::of(flags),
                     name_index: ConstantPoolIndex::new(n_idx as usize),
                     descriptor_index: ConstantPoolIndex::new(d_idx as usize),
-                    attributes: attributes
+                    attributes
                 }),
                 Err(err) => Err(err)
             },

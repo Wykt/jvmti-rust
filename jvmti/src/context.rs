@@ -42,7 +42,7 @@ impl AgentContext {
     pub fn thread_start(&self, thread_id: &ThreadId) {
         match self.context.write() {
             Ok(mut ctx) => {
-                (*ctx).thread_lifetime.insert((*thread_id).clone(), now());
+                ctx.thread_lifetime.insert((*thread_id).clone(), now());
             },
             Err(_) => { /* TODO: Ignore for now */ }
         }
@@ -52,7 +52,7 @@ impl AgentContext {
         match self.context.write() {
             Ok(mut ctx) => {
                 let now = now();
-                Some((*ctx).thread_lifetime.remove(thread_id).unwrap_or(now) - now)
+                Some(ctx.thread_lifetime.remove(thread_id).unwrap_or(now) - now)
             },
             Err(_) => { None /* TODO: Ignore for now */ }
         }
@@ -61,7 +61,7 @@ impl AgentContext {
     pub fn monitor_enter(&self, thread_id: &ThreadId) {
         match self.context.write() {
             Ok(mut ctx) => {
-                (*ctx).monitor_queue.insert((*thread_id).clone(), now());
+                ctx.monitor_queue.insert((*thread_id).clone(), now());
             },
             Err(_) => {
                 // TODO: Ignore this
@@ -73,7 +73,7 @@ impl AgentContext {
         match self.context.write() {
             Ok(mut ctx) => {
                 let now = now();
-                Some((*ctx).monitor_queue.remove(thread_id).unwrap_or(now) - now)
+                Some(ctx.monitor_queue.remove(thread_id).unwrap_or(now) - now)
             },
             Err(_) => { None /* TODO: Ignore for now */ }
         }
@@ -82,7 +82,7 @@ impl AgentContext {
     pub fn wait_start(&self, thread_id: &ThreadId) {
         match self.context.write() {
             Ok(mut ctx) => {
-                (*ctx).thread_wait.insert((*thread_id).clone(), now());
+                ctx.thread_wait.insert((*thread_id).clone(), now());
             },
             Err(_) => { /* TODO: Ignore for now */ }
         }
@@ -92,7 +92,7 @@ impl AgentContext {
         match self.context.write() {
             Ok(mut ctx) => {
                 let now = now();
-                Some((*ctx).thread_wait.remove(thread_id).unwrap_or(now) - now)
+                Some(ctx.thread_wait.remove(thread_id).unwrap_or(now) - now)
             },
             Err(_) => { None /* TODO: Ignoring for now */ }
         }
@@ -103,7 +103,7 @@ impl AgentContext {
             Ok(mut ctx) => {
                 let now = now();
 
-                let new_stack = match (*ctx).method_times.remove(thread_id) {
+                let new_stack = match ctx.method_times.remove(thread_id) {
                     Some(mut thread_stack) => {
                         thread_stack.push(now);
                         thread_stack
@@ -114,7 +114,7 @@ impl AgentContext {
                     }
                 };
 
-                (*ctx).method_times.insert((*thread_id).clone(), new_stack);
+                ctx.method_times.insert((*thread_id).clone(), new_stack);
             },
             Err(_) => { /* TODO: Ignoring for now */ }
         }
@@ -125,11 +125,8 @@ impl AgentContext {
             Ok(mut ctx) => {
                 let now = now();
 
-                match (*ctx).method_times.get_mut(thread_id) {
-                    Some(ref mut thread_stack) => match thread_stack.pop() {
-                        Some(time) => Some(time - now),
-                        None => None
-                    },
+                match ctx.method_times.get_mut(thread_id) {
+                    Some(ref mut thread_stack) => thread_stack.pop().map(|time| time - now),
                     None => None
                 }
             },

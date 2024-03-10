@@ -1,6 +1,5 @@
 use super::native::RawString;
 use std::ffi::CStr;
-use std::ptr;
 
 ///
 /// Turns a C-style string pointer into a String instance. If the string pointer points to NULL,
@@ -8,7 +7,7 @@ use std::ptr;
 ///
 pub fn stringify(input: RawString) -> String {
     unsafe {
-        if input != ptr::null_mut() {
+        if !input.is_null() {
             match CStr::from_ptr(input).to_str() {
                 Ok(string) => string.to_string(),
                 Err(_) => "(UTF8-ERROR)".to_string()

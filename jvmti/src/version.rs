@@ -21,9 +21,9 @@ impl VersionNumber {
         let micro_version = ((version & JVMTI_VERSION_MASK_MICRO) >> JVMTI_VERSION_SHIFT_MICRO) as u8;
 
         VersionNumber {
-            major_version: major_version,
-            minor_version: minor_version,
-            micro_version: micro_version
+            major_version,
+            minor_version,
+            micro_version
         }
     }
 
