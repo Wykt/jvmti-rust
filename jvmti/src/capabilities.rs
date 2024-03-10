@@ -204,14 +204,12 @@ impl Capabilities {
         let fields = vec![ field_map1, field_map2, field_map3, field_map4 ];
         let result:Vec<u32> = fields.iter().map(|f| f.iter().map(|(&value, &switch)| if switch { value } else { 0 }).fold(0, |acc, item| acc | item) ).collect();
 
-        let native_struct = jvmtiCapabilities {
+        jvmtiCapabilities {
             _bindgen_bitfield_1_: result[0],
             _bindgen_bitfield_2_: result[1],
             _bindgen_bitfield_3_: result[2],
             _bindgen_bitfield_4_: result[3]
-        };
-
-        return native_struct;
+        }
     }
 
     pub fn merge(&self, other: &Capabilities) -> Capabilities {

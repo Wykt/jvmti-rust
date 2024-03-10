@@ -25,7 +25,7 @@ impl<'a> JavaType<'a> {
     pub fn parse(signature: &'a str) -> Option<JavaType<'a>> {
         match signature.len() {
             0 => None,
-            1 => match &*signature {
+            1 => match signature {
                 "B" => Some(JavaType::Byte),
                 "C" => Some(JavaType::Char),
                 "D" => Some(JavaType::Double),
@@ -69,7 +69,7 @@ impl<'a> JavaType<'a> {
             JavaType::Void => "void".to_string(),
             JavaType::Boolean => "boolean".to_string(),
             JavaType::Array(ref inner_type) => format!("{}[]", JavaType::to_string(inner_type)),
-            JavaType::Class(cls) => cls.trim_start_matches("L").trim_end_matches(";").replace(";", "").replace("/", ".").to_string()
+            JavaType::Class(cls) => cls.trim_start_matches('L').trim_end_matches(';').replace(';', "").replace('/', ".").to_string()
         }
     }
 }
@@ -95,7 +95,7 @@ impl ClassSignature {
                 let (pkg, name) = str.split_at(idx + 1);
 
                 ClassSignature {
-                    package: pkg.trim_end_matches(".").to_string(),
+                    package: pkg.trim_end_matches('.').to_string(),
                     name: name.to_string()
                 }
             },
@@ -120,8 +120,8 @@ pub struct Class {
 impl Class {
 
     /// Constructs a new Class instance.
-    pub fn new<'a>(id: ClassId, signature: JavaType<'a>) -> Class {
-        Class { id: id, signature: ClassSignature::new(&signature) }
+    pub fn new(id: ClassId, signature: JavaType) -> Class {
+        Class { id, signature: ClassSignature::new(&signature) }
     }
 
     /// Returns the readable name of this class
