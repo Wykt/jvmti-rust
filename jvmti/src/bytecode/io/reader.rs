@@ -288,7 +288,7 @@ impl ClassReader {
                         },
                         Err(err) => Err(err)
                     },
-                    err@_ => err
+                    err => err
                 }
             }),
             Err(err) => Err(err)
@@ -331,7 +331,7 @@ impl ClassReader {
     fn parse_instruction(reader: &mut BlockReader, current_offset: usize) -> Instruction {
         let opcode = reader.get_u8();
 
-        let instruction = match opcode {
+        match opcode {
             0x32 => Instruction::AALOAD,
             0x53 => Instruction::AASTORE,
             0x01 => Instruction::ACONST_NULL,
@@ -577,9 +577,7 @@ impl ClassReader {
                 }
             },
             _ => Instruction::WTF(opcode as u32)
-        };
-
-        instruction
+        }
     }
 
     fn parse_attribute(idx: u16, mut reader: BlockReader, cf: &ClassFragment) -> Attribute {
@@ -592,13 +590,13 @@ impl ClassReader {
                         max_locals: reader.get_u16(),
                         code: {
                             let n = reader.get_u32() as usize;
-                            ClassReader::parse_code(n, &mut BlockReader::new(&mut Cursor::new(reader.get_n(n as usize))))
+                            ClassReader::parse_code(n, &mut BlockReader::new(&mut Cursor::new(reader.get_n(n))))
                         },
                         exception_table: {
                             let n = reader.get_u16();
                             (0..n).map(|_| ExceptionHandler { start_pc: reader.get_u16(), end_pc: reader.get_u16(), handler_pc: reader.get_u16(), catch_type: ConstantPoolIndex::new(reader.get_u16() as usize) }).collect()
                         },
-                        attributes: ClassReader::read_attributes(&mut reader, cf).unwrap_or(vec![])
+                        attributes: ClassReader::read_attributes(&mut reader, cf).unwrap_or_default()
                         }),
                     "StackMapTable" => Some(Attribute::StackMapTable({
                         let n = reader.get_u16();
@@ -619,12 +617,12 @@ impl ClassReader {
                             };
 
                             match frame_type {
-                                tag@0..=63 => StackMapFrame::SameFrame { tag: tag },
-                                tag@64..=127 => StackMapFrame::SameLocals1StackItemFrame { tag: tag, stack: read_verification_type(&mut reader) },
+                                tag@0..=63 => StackMapFrame::SameFrame { tag },
+                                tag@64..=127 => StackMapFrame::SameLocals1StackItemFrame { tag, stack: read_verification_type(&mut reader) },
                                 247 => StackMapFrame::SameLocals1StackItemFrameExtended { offset_delta: reader.get_u16(), stack: read_verification_type(&mut reader) },
-                                tag@248..=250 => StackMapFrame::ChopFrame { tag: tag, offset_delta: reader.get_u16() },
+                                tag@248..=250 => StackMapFrame::ChopFrame { tag, offset_delta: reader.get_u16() },
                                 251 => StackMapFrame::SameFrameExtended { offset_delta: reader.get_u16() },
-                                tag@252..=254 => StackMapFrame::AppendFrame { tag: tag, offset_delta: reader.get_u16(), locals: (0..tag - 251).map(|_| read_verification_type(&mut reader)).collect() },
+                                tag@252..=254 => StackMapFrame::AppendFrame { tag, offset_delta: reader.get_u16(), locals: (0..tag - 251).map(|_| read_verification_type(&mut reader)).collect() },
                                 255 => StackMapFrame::FullFrame { offset_delta: reader.get_u16(), locals: {
                                     let n = reader.get_u16();
                                     (0..n).map(|_| read_verification_type(&mut reader)).collect()
@@ -632,7 +630,7 @@ impl ClassReader {
                                     let n = reader.get_u16();
                                     (0..n).map(|_| read_verification_type(&mut reader)).collect()
                                 }},
-                                tag@_ => StackMapFrame::FutureUse { tag: tag },
+                                tag => StackMapFrame::FutureUse { tag },
                             }
                         }).collect()
                     })),
@@ -754,23 +752,23 @@ impl ClassReader {
             target_info: match reader.get_u8() {
                 // 0x00 type parameter declaration of generic class or interface
                 // 0x01 type parameter declaration of generic method or constructor
-                subtype @ 0x00..=0x01 => TargetInfo::TypeParameter { subtype: subtype, idx: reader.get_u8() },
+                subtype @ 0x00..=0x01 => TargetInfo::TypeParameter { subtype, idx: reader.get_u8() },
                 // type in extends or implements clause of class declaration (including the direct superclass or direct superinterface of an anonymous class declaration), or in extends clause of interface declaration
                 0x10 => TargetInfo::SuperType { idx: reader.get_u16() },
                 // 0x11 type in bound of type parameter declaration of generic class or interface
                 // 0x12 type in bound of type parameter declaration of generic method or constructor
-                subtype @ 0x11..=0x12 => TargetInfo::TypeParameterBound { subtype: subtype, param_idx: reader.get_u8(), bound_index: reader.get_u8() },
+                subtype @ 0x11..=0x12 => TargetInfo::TypeParameterBound { subtype, param_idx: reader.get_u8(), bound_index: reader.get_u8() },
                 // 0x13 type in field declaration
                 // 0x14 return type of method, or type of newly constructed object
                 // 0x15 receiver type of method or constructor
-                subtype @ 0x13..=0x15 => TargetInfo::Empty { subtype: subtype },
+                subtype @ 0x13..=0x15 => TargetInfo::Empty { subtype },
                 // type in formal parameter declaration of method, constructor, or lambda expression
                 0x16 => TargetInfo::MethodFormalParameter { idx: reader.get_u8() },
                 // type in throws clause of method or constructor
                 0x17 => TargetInfo::Throws { idx: reader.get_u16() },
                 // 0x40 type in local variable declaration
                 // 0x41 type in resource variable declaration
-                subtype @ 0x40..=0x41 => TargetInfo::LocalVar { subtype: subtype, target: {
+                subtype @ 0x40..=0x41 => TargetInfo::LocalVar { subtype, target: {
                     let count = reader.get_u16();
 
                                         //u2 start_pc;    u2 length;        u2 index;
@@ -782,12 +780,12 @@ impl ClassReader {
                 // 0x44 type in new expression
                 // 0x45 type in method reference expression using ::new
                 // 0x46 type in method reference expression using ::Identifier
-                subtype @ 0x43..=0x46 => TargetInfo::Offset { subtype: subtype, idx: reader.get_u16() },
+                subtype @ 0x43..=0x46 => TargetInfo::Offset { subtype, idx: reader.get_u16() },
                 // 0x48 type argument for generic constructor in new expression or explicit constructor invocation statement
                 // 0x49 type argument for generic method in method invocation expression
                 // 0x4A type argument for generic constructor in method reference expression using ::new
                 // 0x4B type argument for generic method in method reference expression using ::Identifier
-                subtype @ 0x47..=0x4b => TargetInfo::TypeArgument { subtype: subtype, offset: reader.get_u16(), type_arg_idx: reader.get_u8() },
+                subtype @ 0x47..=0x4b => TargetInfo::TypeArgument { subtype, offset: reader.get_u16(), type_arg_idx: reader.get_u8() },
                 // TODO replace the below fallback branch with proper error handling
                 _ => TargetInfo::Empty { subtype: 0 }
             },
@@ -870,7 +868,7 @@ pub struct BlockReader<'a> {
 impl<'a> BlockReader<'a> {
 
     pub fn new<T>(source: &'a mut T) -> BlockReader where T: Read {
-        BlockReader { source: source, position: 0 }
+        BlockReader { source, position: 0 }
     }
 
     pub fn read_u64(&mut self) -> Result<u64, Error> {
@@ -997,6 +995,7 @@ impl<'a> BlockReader<'a> {
 }
 
 
+#[derive(Default)]
 struct ClassFragment {
     pub version: Option<ClassfileVersion>,
     pub constant_pool: Option<ConstantPool>,
@@ -1027,31 +1026,15 @@ impl ClassFragment {
     /// be defined on the class too, other members will be initialized with their default values
     pub fn to_class(self) -> Classfile {
         Classfile {
-            version: self.version.unwrap_or(ClassfileVersion::default()),
-            constant_pool: self.constant_pool.unwrap_or(ConstantPool::default()),
-            access_flags: self.access_flags.unwrap_or(AccessFlags::new()),
-            this_class: self.this_class.unwrap_or(ConstantPoolIndex::default()),
-            super_class: self.super_class.unwrap_or(ConstantPoolIndex::default()),
-            interfaces: self.interfaces.unwrap_or(vec![]),
-            fields: self.fields.unwrap_or(vec![]),
-            methods: self.methods.unwrap_or(vec![]),
-            attributes: self.attributes.unwrap_or(vec![])
-        }
-    }
-}
-
-impl Default for ClassFragment {
-    fn default() -> Self {
-        ClassFragment {
-            version: None,
-            constant_pool: None,
-            access_flags: None,
-            this_class: None,
-            super_class: None,
-            interfaces: None,
-            fields: None,
-            methods: None,
-            attributes: None
+            version: self.version.unwrap_or_default(),
+            constant_pool: self.constant_pool.unwrap_or_default(),
+            access_flags: self.access_flags.unwrap_or_default(),
+            this_class: self.this_class.unwrap_or_default(),
+            super_class: self.super_class.unwrap_or_default(),
+            interfaces: self.interfaces.unwrap_or_default(),
+            fields: self.fields.unwrap_or_default(),
+            methods: self.methods.unwrap_or_default(),
+            attributes: self.attributes.unwrap_or_default()
         }
     }
 }

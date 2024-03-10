@@ -7,7 +7,7 @@ pub struct ClassWriter<'a> {
 
 impl<'a> ClassWriter<'a> {
     pub fn new<T>(target: &'a mut T) -> ClassWriter where T: Write {
-        ClassWriter { target: target }
+        ClassWriter { target }
     }
 
     pub fn write_class(&mut self, classfile: &Classfile) -> Result<usize, Error> {
@@ -36,28 +36,28 @@ impl<'a> ClassWriter<'a> {
         cp.constants.iter().fold(self.write_u16(cp.cp_len() as u16), |acc, x| {
             match acc {
                 Ok(ctr) => self.write_constant(x).map(|c| c + ctr),
-                err@_ => err
+                err => err
             }
         })
     }
 
     fn write_constant(&mut self, constant: &Constant) -> Result<usize, Error> {
         match constant {
-            &Constant::Utf8(ref bytes) => self.write_u8(1).and(self.write_u16(bytes.len() as u16)).and(self.write_n(bytes)),
-            &Constant::Integer(ref value) => self.write_u8(3).and(self.write_u32(*value)),
-            &Constant::Float(ref value) => self.write_u8(4).and(self.write_u32(*value)),
-            &Constant::Long(ref value) => self.write_u8(5).and(self.write_u64(*value)),
-            &Constant::Double(ref value) => self.write_u8(6).and(self.write_u64(*value)),
-            &Constant::Class(ref idx) => self.write_u8(7).and(self.write_u16(idx.idx as u16)),
-            &Constant::String(ref idx) => self.write_u8(8).and(self.write_u16(idx.idx as u16)),
-            &Constant::MethodType(ref idx) => self.write_u8(16).and(self.write_u16(idx.idx as u16)),
-            &Constant::FieldRef { class_index: ref c_idx, name_and_type_index: ref n_idx } => self.write_u8(9).and(self.write_u16(c_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
-            &Constant::MethodRef { class_index: ref c_idx, name_and_type_index: ref n_idx } => self.write_u8(10).and(self.write_u16(c_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
-            &Constant::InterfaceMethodRef { class_index: ref c_idx, name_and_type_index: ref n_idx } => self.write_u8(11).and(self.write_u16(c_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
-            &Constant::NameAndType { name_index: ref n_idx, descriptor_index: ref d_idx } => self.write_u8(12).and(self.write_u16(n_idx.idx as u16)).and(self.write_u16(d_idx.idx as u16)),
-            &Constant::MethodHandle { reference_kind: ref kind, reference_index: ref r_idx } => self.write_u8(15).and(self.write_u8(kind.to_u8())).and(self.write_u16(r_idx.idx as u16)),
-            &Constant::InvokeDynamic { bootstrap_method_attr_index: ref m_idx, name_and_type_index: ref n_idx } => self.write_u8(18).and(self.write_u16(m_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
-            &Constant::Placeholder => Ok(0),
+            Constant::Utf8(ref bytes) => self.write_u8(1).and(self.write_u16(bytes.len() as u16)).and(self.write_n(bytes)),
+            Constant::Integer(ref value) => self.write_u8(3).and(self.write_u32(*value)),
+            Constant::Float(ref value) => self.write_u8(4).and(self.write_u32(*value)),
+            Constant::Long(ref value) => self.write_u8(5).and(self.write_u64(*value)),
+            Constant::Double(ref value) => self.write_u8(6).and(self.write_u64(*value)),
+            Constant::Class(ref idx) => self.write_u8(7).and(self.write_u16(idx.idx as u16)),
+            Constant::String(ref idx) => self.write_u8(8).and(self.write_u16(idx.idx as u16)),
+            Constant::MethodType(ref idx) => self.write_u8(16).and(self.write_u16(idx.idx as u16)),
+            Constant::FieldRef { class_index: ref c_idx, name_and_type_index: ref n_idx } => self.write_u8(9).and(self.write_u16(c_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
+            Constant::MethodRef { class_index: ref c_idx, name_and_type_index: ref n_idx } => self.write_u8(10).and(self.write_u16(c_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
+            Constant::InterfaceMethodRef { class_index: ref c_idx, name_and_type_index: ref n_idx } => self.write_u8(11).and(self.write_u16(c_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
+            Constant::NameAndType { name_index: ref n_idx, descriptor_index: ref d_idx } => self.write_u8(12).and(self.write_u16(n_idx.idx as u16)).and(self.write_u16(d_idx.idx as u16)),
+            Constant::MethodHandle { reference_kind: ref kind, reference_index: ref r_idx } => self.write_u8(15).and(self.write_u8(kind.to_u8())).and(self.write_u16(r_idx.idx as u16)),
+            Constant::InvokeDynamic { bootstrap_method_attr_index: ref m_idx, name_and_type_index: ref n_idx } => self.write_u8(18).and(self.write_u16(m_idx.idx as u16)).and(self.write_u16(n_idx.idx as u16)),
+            Constant::Placeholder => Ok(0),
             _ => Err(Error::new(ErrorKind::InvalidData, "Unknown constant detected"))
         }
     }
@@ -70,20 +70,20 @@ impl<'a> ClassWriter<'a> {
         self.write_u16(class_index.idx as u16)
     }
 
-    fn write_interfaces(&mut self, ifs: &Vec<ConstantPoolIndex>) -> Result<usize, Error> {
+    fn write_interfaces(&mut self, ifs: &[ConstantPoolIndex]) -> Result<usize, Error> {
         ifs.iter().fold(self.write_u16(ifs.len() as u16), |acc, x| {
             match acc {
                 Ok(ctr) => self.write_u16(x.idx as u16).map(|c| c + ctr),
-                err@_ => err
+                err => err
             }
         })
     }
 
-    fn write_fields(&mut self, fields: &Vec<Field>, cp: &ConstantPool) -> Result<usize, Error> {
+    fn write_fields(&mut self, fields: &[Field], cp: &ConstantPool) -> Result<usize, Error> {
         fields.iter().fold(self.write_u16(fields.len() as u16), |acc, x| {
             match acc {
                 Ok(ctr) => self.write_field(x, cp).map(|c| c + ctr),
-                err@_ => err
+                err => err
             }
         })
     }
@@ -95,11 +95,11 @@ impl<'a> ClassWriter<'a> {
             .and(self.write_attributes(&field.attributes, cp))
     }
 
-    fn write_methods(&mut self, methods: &Vec<Method>, cp: &ConstantPool) -> Result<usize, Error> {
+    fn write_methods(&mut self, methods: &[Method], cp: &ConstantPool) -> Result<usize, Error> {
         methods.iter().fold(self.write_u16(methods.len() as u16), |acc, x| {
             match acc {
                 Ok(ctr) => self.write_method(x, cp).map(|c| c + ctr),
-                err@_ => err
+                err => err
             }
         })
     }
@@ -111,11 +111,11 @@ impl<'a> ClassWriter<'a> {
             .and(self.write_attributes(&method.attributes, cp))
     }
 
-    fn write_attributes(&mut self, attributes: &Vec<Attribute>, cp: &ConstantPool) -> Result<usize, Error> {
+    fn write_attributes(&mut self, attributes: &[Attribute], cp: &ConstantPool) -> Result<usize, Error> {
         attributes.iter().fold(self.write_u16(attributes.len() as u16), |acc, x| {
             match acc {
                 Ok(ctr) => self.write_attribute(x, cp).map(|c| c + ctr),
-                err@_ => err
+                err => err
             }
         })
     }
