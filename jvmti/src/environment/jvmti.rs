@@ -94,7 +94,7 @@ impl JVMTI for JVMTIEnvironment {
 
                     Ok(classes)
                 }
-                err @ _ => Err(err)
+                err  => Err(err)
             } 
         }
     }
@@ -117,7 +117,7 @@ impl JVMTI for JVMTIEnvironment {
 
                     Ok(classes)
                 }
-                err @ _ => Err(err)
+                err  => Err(err)
             } 
         }
     }
@@ -129,7 +129,7 @@ impl JVMTI for JVMTIEnvironment {
         unsafe {
             match wrap_error((**self.jvmti).RetransformClasses.unwrap()(self.jvmti, class_count, classes)) {
                 NativeError::NoError => Ok(()),
-                err @ _ => Err(err)
+                err  => Err(err)
             }
         }
     }
@@ -151,7 +151,7 @@ impl JVMTI for JVMTIEnvironment {
                 NativeError::NoError => {
                     Ok(())
                 },
-                err @ _ => Err(err)
+                err  => Err(err)
             }
         }
     }
@@ -174,7 +174,7 @@ impl JVMTI for JVMTIEnvironment {
 
                     Ok(vec)
                 }
-                err @ _ => Err(err)
+                err  => Err(err)
             }
         }
     }
@@ -186,7 +186,7 @@ impl JVMTI for JVMTIEnvironment {
         unsafe {
             match wrap_error((**self.jvmti).AddCapabilities.unwrap()(self.jvmti, caps_ptr)) {
                 NativeError::NoError => Ok(self.get_capabilities()),
-                err @ _ => Err(err)
+                err  => Err(err)
             }
         }
     }
@@ -229,7 +229,7 @@ impl JVMTI for JVMTIEnvironment {
         unsafe {
             match wrap_error((**self.jvmti).SetEventCallbacks.unwrap()(self.jvmti, &native_callbacks, callbacks_size)) {
                 NativeError::NoError => None,
-                err @ _ => Some(err)
+                err  => Some(err)
             }
         }
     }
@@ -241,7 +241,7 @@ impl JVMTI for JVMTIEnvironment {
 
             match wrap_error((**self.jvmti).SetEventNotificationMode.unwrap()(self.jvmti, mode_i, event as u32, sptr)) {
                 NativeError::NoError => None,
-                err @ _ => Some(err)
+                err  => Some(err)
             }
         }
     }
@@ -256,12 +256,12 @@ impl JVMTI for JVMTIEnvironment {
                     match wrap_error(func(self.jvmti, *thread_id, info_ptr)) {
                         NativeError::NoError => Ok(Thread {
                             id: ThreadId { native_id: *thread_id },
-                            name: stringify((*info_ptr).name),
-                            priority: (*info_ptr).priority as u32,
-                            is_daemon: if (*info_ptr).is_daemon > 0 { true } else { false },
+                            name: stringify(info_ptr.name),
+                            priority: info_ptr.priority as u32,
+                            is_daemon: info_ptr.is_daemon > 0,
                             context_class_loader: &mut *info_ptr.context_class_loader
                         }),
-                        err@_ => Err(err)
+                        err => Err(err)
                     }
                 },
                 None => Err(NativeError::NoError)
@@ -277,7 +277,7 @@ impl JVMTI for JVMTIEnvironment {
         unsafe {
             match wrap_error((**self.jvmti).GetMethodDeclaringClass.unwrap()(self.jvmti, method_id.native_id, meta_ptr)) {
                 NativeError::NoError => Ok(ClassId { native_id: *meta_ptr }),
-                err @ _ => Err(err)
+                err => Err(err)
             }
         }
     }
@@ -295,7 +295,7 @@ impl JVMTI for JVMTIEnvironment {
         unsafe {
             match wrap_error((**self.jvmti).GetMethodName.unwrap()(self.jvmti, method_id.native_id, method_ptr, signature_ptr, generic_sig_ptr)) {
                 NativeError::NoError => Ok(MethodSignature::new(stringify(*method_ptr))),
-                err @ _ => Err(err)
+                err => Err(err)
             }
         }
     }
@@ -309,7 +309,7 @@ impl JVMTI for JVMTIEnvironment {
 
             match wrap_error((**self.jvmti).GetClassSignature.unwrap()(self.jvmti, class_id.native_id, p1, p2)) {
                 NativeError::NoError => Ok(ClassSignature::new(&JavaType::parse(&stringify(sig)).unwrap())),
-                err @ _ => Err(err)
+                err => Err(err)
             }
         }
     }
@@ -321,8 +321,8 @@ impl JVMTI for JVMTIEnvironment {
 
         unsafe {
             match wrap_error((**self.jvmti).Allocate.unwrap()(self.jvmti, size, mem_ptr)) {
-                NativeError::NoError => Ok(MemoryAllocation { ptr: ptr, len: len }),
-                err @ _ => Err(err)
+                NativeError::NoError => Ok(MemoryAllocation { ptr, len }),
+                err => Err(err)
             }
         }
     }

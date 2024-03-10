@@ -20,7 +20,7 @@ impl JVMAgent {
 
     /// Create a new `JVMAgent` instance
     pub fn new(vm: JavaVMPtr) -> JVMAgent {
-        JVMAgent { vm: vm }
+        JVMAgent { vm }
     }
 }
 
@@ -30,7 +30,7 @@ impl JVMF for JVMAgent {
     /// otherwise return an error message.
     fn get_environment(&self) -> Result<Box<dyn JVMTI>, NativeError> {
         unsafe {
-            let mut void_ptr: *mut c_void = ptr::null_mut() as *mut c_void;
+            let mut void_ptr: *mut c_void = ptr::null_mut();
             let penv_ptr: *mut *mut c_void = &mut void_ptr as *mut *mut c_void;
             let result = wrap_error((**self.vm).GetEnv.unwrap()(self.vm, penv_ptr, JVMTI_VERSION) as u32);
 
@@ -38,9 +38,9 @@ impl JVMF for JVMAgent {
                 NativeError::NoError => {
                     let env_ptr: JVMTIEnvPtr = *penv_ptr as JVMTIEnvPtr;
                     let env = JVMTIEnvironment::new(env_ptr);
-                    return Result::Ok(Box::new(env));
+                    Result::Ok(Box::new(env))
                 },
-                err @ _ => Result::Err(wrap_error(err as u32))
+                err  => Result::Err(wrap_error(err as u32))
             }
         }
     }

@@ -21,7 +21,7 @@ pub struct JNIEnvironment {
 impl JNIEnvironment {
 
     pub fn new(jni: JNIEnvPtr) -> JNIEnvironment {
-        JNIEnvironment { jni: jni }
+        JNIEnvironment { jni }
     }
 }
 

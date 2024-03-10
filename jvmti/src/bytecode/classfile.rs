@@ -5,6 +5,8 @@
 /// encoded in the type system instead. This approach may seem restrictive but it helps achieving
 /// bytecode safety.
 #[derive(Debug, PartialEq)]
+
+#[derive(Default)]
 pub struct Classfile {
     pub version: ClassfileVersion,
     pub constant_pool: ConstantPool,
@@ -24,22 +26,6 @@ impl Classfile {
     }
 }
 
-impl Default for Classfile {
-    fn default() -> Self {
-        Classfile {
-            version: ClassfileVersion::default(),
-            constant_pool: ConstantPool::default(),
-            access_flags: AccessFlags::default(),
-            this_class: ConstantPoolIndex::default(),
-            super_class: ConstantPoolIndex::default(),
-            interfaces: vec![],
-            fields: vec![],
-            methods: vec![],
-            attributes: vec![]
-        }
-    }
-}
-
 ///
 /// Describe a classfile version number.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Debug)]
@@ -50,7 +36,7 @@ pub struct ClassfileVersion {
 
 impl ClassfileVersion {
     pub fn new(major_version: u16, minor_version: u16) -> ClassfileVersion {
-        ClassfileVersion { major_version: major_version, minor_version: minor_version }
+        ClassfileVersion { major_version, minor_version }
     }
 }
 
@@ -74,7 +60,7 @@ pub struct ConstantPool {
 impl ConstantPool {
     pub fn new(constants: Vec<Constant>) -> ConstantPool {
         ConstantPool {
-            constants: constants
+            constants
         }
     }
 
@@ -100,13 +86,11 @@ impl ConstantPool {
 
     pub fn find_ut8_index(&self, utf8: &'static str) -> Option<usize> {
         for i in 0..self.constants.len() {
-            match self.constants[i] {
-                Constant::Utf8(ref bytes) => {
-                    if bytes.as_slice() == utf8.as_bytes() {
-                        return Some(i);
-                    }
-                },
-                _ => ()
+
+            if let Constant::Utf8(ref bytes) = self.constants[i] {
+                if bytes.as_slice() == utf8.as_bytes() {
+                    return Some(i);
+                }
             }
         }
         None
@@ -158,7 +142,7 @@ pub struct ConstantPoolIndex {
 
 impl ConstantPoolIndex {
     pub fn new(idx: usize) -> Self {
-        ConstantPoolIndex { idx: idx }
+        ConstantPoolIndex { idx }
     }
 }
 
@@ -185,9 +169,9 @@ pub enum Constant {
 impl Constant {
     pub fn cp_size(&self) -> usize {
         match self {
-            &Constant::Long(_) => 2,
-            &Constant::Double(_) => 2,
-            &Constant::Placeholder => 0,
+            Constant::Long(_) => 2,
+            Constant::Double(_) => 2,
+            Constant::Placeholder => 0,
             _ => 1
         }
     }
@@ -382,15 +366,19 @@ pub enum StackMapFrame {
 impl StackMapFrame {
     pub fn len(&self) -> usize {
         match self {
-            &StackMapFrame::SameFrame { tag: _ } => 1,
-            &StackMapFrame::SameLocals1StackItemFrame{ tag: _, ref stack } => 1 + stack.len(),
-            &StackMapFrame::SameLocals1StackItemFrameExtended { offset_delta: _, ref stack } => 3 + stack.len(),
-            &StackMapFrame::ChopFrame { tag: _, offset_delta: _ } => 3,
-            &StackMapFrame::SameFrameExtended { offset_delta: _ } => 3,
-            &StackMapFrame::AppendFrame { tag: _, offset_delta: _, ref locals } => 3 + locals.iter().fold(0, |acc, x| acc + x.len()),
-            &StackMapFrame::FullFrame { offset_delta: _, ref locals, ref stack } => 7 + locals.iter().fold(0, |acc, x| acc + x.len()) + stack.iter().fold(0, |acc, x| acc + x.len()),
-            &StackMapFrame::FutureUse { tag: _ } => 0
+            StackMapFrame::SameFrame { tag: _ } => 1,
+            StackMapFrame::SameLocals1StackItemFrame{ tag: _, ref stack } => 1 + stack.len(),
+            StackMapFrame::SameLocals1StackItemFrameExtended { offset_delta: _, ref stack } => 3 + stack.len(),
+            StackMapFrame::ChopFrame { tag: _, offset_delta: _ } => 3,
+            StackMapFrame::SameFrameExtended { offset_delta: _ } => 3,
+            StackMapFrame::AppendFrame { tag: _, offset_delta: _, ref locals } => 3 + locals.iter().fold(0, |acc, x| acc + x.len()),
+            StackMapFrame::FullFrame { offset_delta: _, ref locals, ref stack } => 7 + locals.iter().fold(0, |acc, x| acc + x.len()) + stack.iter().fold(0, |acc, x| acc + x.len()),
+            StackMapFrame::FutureUse { tag: _ } => 0
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -410,10 +398,14 @@ pub enum VerificationType {
 impl VerificationType {
     pub fn len(&self) -> usize {
         match self {
-            &VerificationType::Object { cpool_index: _ } => 3,
-            &VerificationType::Uninitialized { offset: _ } => 3,
+            VerificationType::Object { cpool_index: _ } => 3,
+            VerificationType::Uninitialized { offset: _ } => 3,
             _ => 1
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -468,6 +460,10 @@ impl Annotation {
         4 + self.element_value_pairs.iter().fold(0, |acc, x| acc + x.len())
         //4 + self.element_value_pairs.len() * 2 + self.element_value_pairs.iter().fold(0, |acc, x| acc + x.len())
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -479,6 +475,10 @@ pub struct ElementValuePair {
 impl ElementValuePair {
     pub fn len(&self) -> usize {
         2 + self.value.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -494,12 +494,16 @@ pub enum ElementValue {
 impl ElementValue {
     pub fn len(&self) -> usize {
         match self {
-            &ElementValue::ConstantValue(_, _) => 3,
-            &ElementValue::Enum { type_name_index: _, const_name_index: _ } => 5,
-            &ElementValue::ClassInfo(_) => 3,
-            &ElementValue::Annotation(ref annotation) => 1 + annotation.len(),
-            &ElementValue::Array(ref table) => table.iter().fold(3, |acc, x| acc + x.len())
+            ElementValue::ConstantValue(_, _) => 3,
+            ElementValue::Enum { type_name_index: _, const_name_index: _ } => 5,
+            ElementValue::ClassInfo(_) => 3,
+            ElementValue::Annotation(ref annotation) => 1 + annotation.len(),
+            ElementValue::Array(ref table) => table.iter().fold(3, |acc, x| acc + x.len())
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -514,6 +518,10 @@ pub struct TypeAnnotation {
 impl TypeAnnotation {
     pub fn len(&self) -> usize {
         5 + self.target_info.len() + self.target_path.len() + self.element_value_pairs.iter().fold(0, |acc, x| acc + x.len())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -534,29 +542,33 @@ pub enum TargetInfo {
 impl TargetInfo {
     pub fn len(&self) -> usize {
         match self {
-            &TargetInfo::TypeParameter { subtype: _, idx: _ } => 1,
-            &TargetInfo::SuperType { idx: _ } => 2,
-            &TargetInfo::TypeParameterBound { subtype: _, param_idx: _, bound_index: _ } => 2,
-            &TargetInfo::Empty { subtype: _ } => 0,
-            &TargetInfo::MethodFormalParameter { idx: _ } => 1,
-            &TargetInfo::Throws { idx: _ } => 2,
-            &TargetInfo::LocalVar { subtype: _, ref target } => { 2 + target.len() * 6 },
-            &TargetInfo::Catch { idx: _ } => 2,
-            &TargetInfo::Offset { subtype: _, idx: _ } => 2,
-            &TargetInfo::TypeArgument { subtype: _, offset: _, type_arg_idx: _ } => 3
+            TargetInfo::TypeParameter { subtype: _, idx: _ } => 1,
+            TargetInfo::SuperType { idx: _ } => 2,
+            TargetInfo::TypeParameterBound { subtype: _, param_idx: _, bound_index: _ } => 2,
+            TargetInfo::Empty { subtype: _ } => 0,
+            TargetInfo::MethodFormalParameter { idx: _ } => 1,
+            TargetInfo::Throws { idx: _ } => 2,
+            TargetInfo::LocalVar { subtype: _, ref target } => { 2 + target.len() * 6 },
+            TargetInfo::Catch { idx: _ } => 2,
+            TargetInfo::Offset { subtype: _, idx: _ } => 2,
+            TargetInfo::TypeArgument { subtype: _, offset: _, type_arg_idx: _ } => 3
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn subtype(&self) -> u8 {
         match self {
             &TargetInfo::TypeParameter { subtype, idx: _ } => subtype,
-            &TargetInfo::SuperType { idx: _ } => 0x10,
+            TargetInfo::SuperType { idx: _ } => 0x10,
             &TargetInfo::TypeParameterBound { subtype, param_idx: _, bound_index: _ } => subtype,
             &TargetInfo::Empty { subtype } => subtype,
-            &TargetInfo::MethodFormalParameter { idx: _ } => 0x16,
-            &TargetInfo::Throws { idx: _ } => 0x17,
+            TargetInfo::MethodFormalParameter { idx: _ } => 0x16,
+            TargetInfo::Throws { idx: _ } => 0x17,
             &TargetInfo::LocalVar { subtype, target: _ } => subtype,
-            &TargetInfo::Catch { idx: _ } => 0x42,
+            TargetInfo::Catch { idx: _ } => 0x42,
             &TargetInfo::Offset { subtype, idx: _ } => subtype,
             &TargetInfo::TypeArgument { subtype, offset: _, type_arg_idx: _ } => subtype
         }
@@ -572,6 +584,10 @@ impl TypePath {
     pub fn len(&self) -> usize {
         1 + self.path.len() * 2
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -585,10 +601,10 @@ pub enum TypePathKind {
 impl TypePathKind {
     pub fn value(&self) -> u8 {
         match self {
-            &TypePathKind::Array => 0,
-            &TypePathKind::Nested => 1,
-            &TypePathKind::Wildcard => 2,
-            &TypePathKind::TypeArgument => 3,
+            TypePathKind::Array => 0,
+            TypePathKind::Nested => 1,
+            TypePathKind::Wildcard => 2,
+            TypePathKind::TypeArgument => 3,
         }
     }
 }
@@ -610,6 +626,10 @@ pub struct MethodParameter {
 
 impl MethodParameter {
     pub fn len(&self) -> usize { 4 }
+
+    pub fn is_empty(&self) -> bool {
+        false
+    }
 }
 
 #[allow(non_camel_case_types)]
@@ -835,74 +855,78 @@ pub enum Instruction {
 impl Instruction {
     pub fn len(&self) -> usize {
         match self {
-            &Instruction::ALOAD(_) => 2,
-            &Instruction::ANEWARRAY(_) => 3,
-            &Instruction::ASTORE(_) => 2,
-            &Instruction::BIPUSH(_) => 2,
-            &Instruction::CHECKCAST(_) => 3,
-            &Instruction::DLOAD(_) => 2,
-            &Instruction::DSTORE(_) => 2,
-            &Instruction::FLOAD(_) => 2,
-            &Instruction::FSTORE(_) => 2,
-            &Instruction::GETFIELD(_) => 3,
-            &Instruction::GETSTATIC(_) => 3,
-            &Instruction::GOTO(_) => 3,
-            &Instruction::GOTO_W(_) => 5,
-            &Instruction::IF_ACMPEQ(_) => 3,
-            &Instruction::IF_ACMPNE(_) => 3,
-            &Instruction::IF_ICMPEQ(_) => 3,
-            &Instruction::IF_ICMPNE(_) => 3,
-            &Instruction::IF_ICMPLT(_) => 3,
-            &Instruction::IF_ICMPGE(_) => 3,
-            &Instruction::IF_ICMPGT(_) => 3,
-            &Instruction::IF_ICMPLE(_) => 3,
-            &Instruction::IFEQ(_) => 3,
-            &Instruction::IFNE(_) => 3,
-            &Instruction::IFLT(_) => 3,
-            &Instruction::IFGE(_) => 3,
-            &Instruction::IFGT(_) => 3,
-            &Instruction::IFLE(_) => 3,
-            &Instruction::IFNONNULL(_) => 3,
-            &Instruction::IFNULL(_) => 3,
-            &Instruction::IINC(_, _) => 3,
-            &Instruction::ILOAD(_) => 2,
-            &Instruction::INSTANCEOF(_) => 3,
-            &Instruction::INVOKEDYNAMIC(_) => 5,
-            &Instruction::INVOKEINTERFACE(_, _) => 5,
-            &Instruction::INVOKESPECIAL(_) => 3,
-            &Instruction::INVOKESTATIC(_) => 3,
-            &Instruction::INVOKEVIRTUAL(_) => 3,
-            &Instruction::ISTORE(_) => 2,
-            &Instruction::JSR(_) => 3,
-            &Instruction::JSR_W(_) => 5,
-            &Instruction::LDC(_) => 2,
-            &Instruction::LDC_W(_) => 3,
-            &Instruction::LDC2_W(_) => 3,
-            &Instruction::LLOAD(_) => 2,
-            &Instruction::LOOKUPSWITCH(_, ref pairs) => { 5 + pairs.len() * 4 },
-            &Instruction::LSTORE(_) => 2,
-            &Instruction::MULTIANEWARRAY(_, _) => 4,
+            Instruction::ALOAD(_) => 2,
+            Instruction::ANEWARRAY(_) => 3,
+            Instruction::ASTORE(_) => 2,
+            Instruction::BIPUSH(_) => 2,
+            Instruction::CHECKCAST(_) => 3,
+            Instruction::DLOAD(_) => 2,
+            Instruction::DSTORE(_) => 2,
+            Instruction::FLOAD(_) => 2,
+            Instruction::FSTORE(_) => 2,
+            Instruction::GETFIELD(_) => 3,
+            Instruction::GETSTATIC(_) => 3,
+            Instruction::GOTO(_) => 3,
+            Instruction::GOTO_W(_) => 5,
+            Instruction::IF_ACMPEQ(_) => 3,
+            Instruction::IF_ACMPNE(_) => 3,
+            Instruction::IF_ICMPEQ(_) => 3,
+            Instruction::IF_ICMPNE(_) => 3,
+            Instruction::IF_ICMPLT(_) => 3,
+            Instruction::IF_ICMPGE(_) => 3,
+            Instruction::IF_ICMPGT(_) => 3,
+            Instruction::IF_ICMPLE(_) => 3,
+            Instruction::IFEQ(_) => 3,
+            Instruction::IFNE(_) => 3,
+            Instruction::IFLT(_) => 3,
+            Instruction::IFGE(_) => 3,
+            Instruction::IFGT(_) => 3,
+            Instruction::IFLE(_) => 3,
+            Instruction::IFNONNULL(_) => 3,
+            Instruction::IFNULL(_) => 3,
+            Instruction::IINC(_, _) => 3,
+            Instruction::ILOAD(_) => 2,
+            Instruction::INSTANCEOF(_) => 3,
+            Instruction::INVOKEDYNAMIC(_) => 5,
+            Instruction::INVOKEINTERFACE(_, _) => 5,
+            Instruction::INVOKESPECIAL(_) => 3,
+            Instruction::INVOKESTATIC(_) => 3,
+            Instruction::INVOKEVIRTUAL(_) => 3,
+            Instruction::ISTORE(_) => 2,
+            Instruction::JSR(_) => 3,
+            Instruction::JSR_W(_) => 5,
+            Instruction::LDC(_) => 2,
+            Instruction::LDC_W(_) => 3,
+            Instruction::LDC2_W(_) => 3,
+            Instruction::LLOAD(_) => 2,
+            Instruction::LOOKUPSWITCH(_, ref pairs) => { 5 + pairs.len() * 4 },
+            Instruction::LSTORE(_) => 2,
+            Instruction::MULTIANEWARRAY(_, _) => 4,
             &Instruction::NEW(_) => 3,
-            &Instruction::NEWARRAY(_) => 2,
-            &Instruction::PUTFIELD(_) => 3,
-            &Instruction::PUTSTATIC(_) => 3,
-            &Instruction::RET(_) => 2,
-            &Instruction::SIPUSH(_) => 3,
-            &Instruction::TABLESWITCH(_, _, _, ref indices) => { 13 + (indices.len() * 4) },
-            &Instruction::IINC_W(_, _) => 9,
-            &Instruction::ILOAD_W(_) => 5,
-            &Instruction::FLOAD_W(_) => 5,
-            &Instruction::ALOAD_W(_) => 5,
-            &Instruction::LLOAD_W(_) => 5,
-            &Instruction::DLOAD_W(_) => 5,
-            &Instruction::ISTORE_W(_) => 5,
-            &Instruction::FSTORE_W(_) => 5,
-            &Instruction::ASTORE_W(_) => 5,
-            &Instruction::LSTORE_W(_) => 5,
-            &Instruction::DSTORE_W(_) => 5,
-            &Instruction::RET_W(_) => 5,
+            Instruction::NEWARRAY(_) => 2,
+            Instruction::PUTFIELD(_) => 3,
+            Instruction::PUTSTATIC(_) => 3,
+            Instruction::RET(_) => 2,
+            Instruction::SIPUSH(_) => 3,
+            Instruction::TABLESWITCH(_, _, _, ref indices) => { 13 + (indices.len() * 4) },
+            Instruction::IINC_W(_, _) => 9,
+            Instruction::ILOAD_W(_) => 5,
+            Instruction::FLOAD_W(_) => 5,
+            Instruction::ALOAD_W(_) => 5,
+            Instruction::LLOAD_W(_) => 5,
+            Instruction::DLOAD_W(_) => 5,
+            Instruction::ISTORE_W(_) => 5,
+            Instruction::FSTORE_W(_) => 5,
+            Instruction::ASTORE_W(_) => 5,
+            Instruction::LSTORE_W(_) => 5,
+            Instruction::DSTORE_W(_) => 5,
+            Instruction::RET_W(_) => 5,
             &Instruction::PADDED_INSTRUCTION(padding) => padding,
             _ => 1
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
